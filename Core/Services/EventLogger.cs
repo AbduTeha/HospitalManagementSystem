@@ -1,0 +1,21 @@
+using HospitalManagementSystem.Core.Models;
+
+namespace HospitalManagementSystem.Core.Services;
+
+public static class EventLogger
+{
+    private static readonly object Sync = new();
+    private static string LogPath => Path.Combine(AppContext.BaseDirectory, "hospital-events.log");
+
+    public static void LogAppointment(Appointment appointment) => Write($"Appointment booked: #{appointment.AppointmentID}, patient #{appointment.PatientID}, doctor #{appointment.DoctorID}, {appointment.AppointmentDate:O}");
+    public static void LogBill(Bill bill) => Write($"Bill generated: #{bill.BillID}, patient #{bill.PatientID}, total {bill.TotalAmount:0.00}, status {bill.PaymentStatus}");
+
+    private static void Write(string text)
+    {
+        try
+        {
+            lock (Sync) File.AppendAllText(LogPath, $"{DateTime.Now:O} | {text}{Environment.NewLine}");
+        }
+        catch { }
+    }
+}
