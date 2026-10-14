@@ -34,34 +34,158 @@ public sealed class BillingForm : Form
 
     private void InitializeCustomComponents()
     {
-        var root = new Panel { Dock = DockStyle.Fill }; root.Controls.Add(_grid);
-        var editor = new TableLayoutPanel { Dock = DockStyle.Top, Height = 245, ColumnCount = 4, RowCount = 4, Padding = new Padding(8) };
-        for (var i = 0; i < 4; i++) editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-        AddField(editor, "Patient", _patient, 0, 0); AddField(editor, "Doctor", _doctor, 1, 0); AddField(editor, "Room", _room, 2, 0); AddField(editor, "Stay days", _days, 3, 0);
-        AddField(editor, "Doctor fee", _doctorFee, 0, 1); AddField(editor, "Room fee", _roomFee, 1, 1); AddField(editor, "Medicine fee", _medicine, 2, 1); AddField(editor, "Payment", _payment, 3, 1);
-        _payment.Items.AddRange(new[] { "Unpaid", "Paid" }); _payment.SelectedIndex = 0;
-        var totalPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(4) }; totalPanel.Controls.Add(_total); totalPanel.Controls.Add(new Label { Text = "Total", Dock = DockStyle.Top, Height = 24, Font = new Font("Segoe UI", 9F, FontStyle.Bold) }); editor.Controls.Add(totalPanel, 0, 2);
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill };
-        var generate = UIHelpers.ActionButton("Generate Bill"); generate.Click += (_, _) => GenerateBill();
-        var print = UIHelpers.ActionButton("Print Receipt"); print.Click += (_, _) => PrintReceipt();
-        var refresh = UIHelpers.ActionButton("Refresh"); refresh.Click += (_, _) => LoadBills();
-        actions.Controls.AddRange(new Control[] { generate, print, refresh }); editor.Controls.Add(actions, 1, 2); editor.SetColumnSpan(actions, 3);
-        _doctor.SelectedIndexChanged += (_, _) => CalculateTotal(); _room.SelectedIndexChanged += (_, _) => CalculateTotal(); _days.ValueChanged += (_, _) => CalculateTotal(); _medicine.ValueChanged += (_, _) => CalculateTotal();
-        root.Controls.Add(editor); root.Controls.Add(UIHelpers.Header("Billing & Invoice Generator")); Controls.Add(root);
+        var root = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(248, 248, 248) };
+
+        var editor = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 330,
+            BackColor = Color.White,
+            Padding = new Padding(12),
+            BorderStyle = BorderStyle.FixedSingle
+        };
+
+        var formTable = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 3,
+            Padding = new Padding(0)
+        };
+
+        for (var i = 0; i < 4; i++)
+            formTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+        for (var i = 0; i < 3; i++)
+            formTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            formTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            formTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+
+        AddField(formTable, "Patient *", _patient, 0, 0);
+        AddField(formTable, "Doctor *", _doctor, 1, 0);
+        AddField(formTable, "Room *", _room, 2, 0);
+        AddField(formTable, "Stay Days *", _days, 3, 0);
+
+        AddField(formTable, "Doctor Fee", _doctorFee, 0, 1);
+        AddField(formTable, "Room Fee", _roomFee, 1, 1);
+        AddField(formTable, "Medicine Fee", _medicine, 2, 1);
+        AddField(formTable, "Payment", _payment, 3, 1);
+
+        _payment.Items.AddRange(new[] { "Unpaid", "Paid" });
+        _payment.SelectedIndex = 0;
+
+        var totalPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6), BackColor = Color.FromArgb(230, 242, 251) };
+        var totalLabel = new Label
+        {
+            Text = "Total Amount",
+            Dock = DockStyle.Top,
+            Height = 22,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(33, 33, 33),
+            BackColor = Color.Transparent
+        };
+        _total.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
+        _total.ForeColor = Color.FromArgb(0, 102, 153);
+        _total.Dock = DockStyle.Top;
+        _total.AutoSize = false;
+        _total.Height = 40;
+        totalPanel.Controls.Add(_total);
+        totalPanel.Controls.Add(totalLabel);
+        formTable.Controls.Add(totalPanel, 0, 2);
+
+        var actionPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 45,
+            Padding = new Padding(6),
+            BackColor = Color.White,
+            AutoSize = true
+        };
+
+        var generate = UIHelpers.SuccessButton("💳 Generate Bill");
+        generate.Click += (_, _) => GenerateBill();
+        var print = UIHelpers.ActionButton("🖨️ Print Receipt");
+        print.Click += (_, _) => PrintReceipt();
+        var refresh = UIHelpers.ActionButton("🔄 Refresh");
+        refresh.Click += (_, _) => LoadBills();
+
+        actionPanel.Controls.AddRange(new Control[] { generate, print, refresh });
+        formTable.Controls.Add(actionPanel, 1, 2);
+        formTable.SetColumnSpan(actionPanel, 3);
+
+        _doctor.SelectedIndexChanged += (_, _) => CalculateTotal();
+        _room.SelectedIndexChanged += (_, _) => CalculateTotal();
+        _days.ValueChanged += (_, _) => CalculateTotal();
+        _medicine.ValueChanged += (_, _) => CalculateTotal();
+
+        editor.Controls.Add(formTable);
+
+        var headerSection = new Panel { Dock = DockStyle.Fill, Height = 55, BackColor = Color.White, Padding = new Padding(0) };
+        headerSection.Controls.Add(UIHelpers.Header("Billing & Invoice Generator"));
+
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(0) };
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        layout.Controls.Add(editor, 0, 0);
+        headerSection.Margin = new Padding(0, 8, 0, 0);
+        layout.Controls.Add(headerSection, 0, 1);
+        layout.Controls.Add(_grid, 0, 2);
+
+        root.Controls.Add(layout);
+        Controls.Add(root);
     }
 
     private static void AddField(TableLayoutPanel table, string label, Control control, int column, int row)
     {
-        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(4) }; panel.Controls.Add(control); panel.Controls.Add(new Label { Text = label, Dock = DockStyle.Top, Height = 24, Font = new Font("Segoe UI", 9F, FontStyle.Bold) }); table.Controls.Add(panel, column, row);
+        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6), BackColor = Color.White };
+
+        var labelControl = new Label
+        {
+            Text = label,
+            Dock = DockStyle.Top,
+            Height = 22,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(33, 33, 33),
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 0, 4)
+        };
+
+        control.Dock = DockStyle.Top;
+        control.Margin = new Padding(0, 0, 0, 6);
+
+        panel.Controls.Add(control);
+        panel.Controls.Add(labelControl);
+        table.Controls.Add(panel, column, row);
     }
 
     private void LoadSelectors()
     {
         try
         {
-            var patients = _patients.GetAll().ToList(); _patient.DataSource = patients; _patient.DisplayMember = "FullName"; _patient.ValueMember = "ID";
-            var doctors = _doctors.GetAll().ToList(); _doctor.DataSource = doctors; _doctor.DisplayMember = "FullName"; _doctor.ValueMember = "ID";
-            var rooms = _rooms.GetAll("Available").ToList(); _room.DataSource = rooms; _room.DisplayMember = "RoomNumber"; _room.ValueMember = "RoomID";
+            var patients = _patients.GetAll().ToList();
+            if (patients.Count > 0)
+            {
+                _patient.DataSource = new BindingSource(patients, null);
+                _patient.DisplayMember = "FullName";
+                _patient.ValueMember = "ID";
+            }
+
+            var doctors = _doctors.GetAll().ToList();
+            if (doctors.Count > 0)
+            {
+                _doctor.DataSource = new BindingSource(doctors, null);
+                _doctor.DisplayMember = "FullName";
+                _doctor.ValueMember = "ID";
+            }
+
+            var rooms = _rooms.GetAll("Available").ToList();
+            if (rooms.Count > 0)
+            {
+                _room.DataSource = new BindingSource(rooms, null);
+                _room.DisplayMember = "RoomNumber";
+                _room.ValueMember = "RoomID";
+            }
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Billing", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }

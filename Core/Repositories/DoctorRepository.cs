@@ -2,6 +2,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using HospitalManagementSystem.Core.Interfaces;
 using HospitalManagementSystem.Core.Models;
+using HospitalManagementSystem.Core.Security;
 using HospitalManagementSystem.Data;
 
 namespace HospitalManagementSystem.Core.Repositories;
@@ -26,6 +27,8 @@ public sealed class DoctorRepository : IDoctorRepository
 
     public int Add(Doctor doctor)
     {
+        Permissions.Require(Permission.ManageDoctors);
+
         const string sql = @"INSERT INTO dbo.Doctors (FullName, Specialization, Phone, Email, ConsultationFee)
                              VALUES (@FullName,@Specialization,@Phone,@Email,@Fee);
                              SELECT CAST(SCOPE_IDENTITY() AS INT);";
@@ -40,6 +43,8 @@ public sealed class DoctorRepository : IDoctorRepository
 
     public bool Update(Doctor doctor)
     {
+        Permissions.Require(Permission.ManageDoctors);
+
         const string sql = @"UPDATE dbo.Doctors SET FullName=@FullName, Specialization=@Specialization, Phone=@Phone,
                              Email=@Email, ConsultationFee=@Fee WHERE DoctorID=@ID;";
         return _db.ExecuteNonQuery(sql,
@@ -53,6 +58,8 @@ public sealed class DoctorRepository : IDoctorRepository
 
     public bool Delete(int id)
     {
+        Permissions.Require(Permission.ManageDoctors);
+
         const string sql = "DELETE FROM dbo.Doctors WHERE DoctorID=@ID;";
         return _db.ExecuteNonQuery(sql, new SqlParameter("@ID", SqlDbType.Int) { Value = id }) > 0;
     }

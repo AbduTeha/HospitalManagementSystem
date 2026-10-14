@@ -30,38 +30,136 @@ public sealed class AppointmentForm : Form
 
     private void InitializeCustomComponents()
     {
-        var root = new Panel { Dock = DockStyle.Fill }; root.Controls.Add(_grid);
-        var editor = new TableLayoutPanel { Dock = DockStyle.Top, Height = 210, ColumnCount = 4, RowCount = 4, Padding = new Padding(8) };
-        for (var i = 0; i < 4; i++) editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-        AddField(editor, "Patient", _patient, 0, 0); AddField(editor, "Doctor", _doctor, 1, 0); AddField(editor, "Date", _date, 2, 0); AddField(editor, "Time", _time, 3, 0);
-        AddField(editor, "Consultation fee", _fee, 0, 1); AddField(editor, "Diagnosis", _diagnosis, 1, 1); AddField(editor, "Status", _status, 2, 1);
-        _status.Items.AddRange(new[] { "Scheduled", "Completed", "Cancelled" }); _status.SelectedIndex = 0;
-        for (var h = 8; h <= 17; h++) { _time.Items.Add($"{h:00}:00"); _time.Items.Add($"{h:00}:30"); } _time.SelectedIndex = 0;
+        var root = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(248, 248, 248) };
+
+        var editor = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 270,
+            BackColor = Color.White,
+            Padding = new Padding(12),
+            BorderStyle = BorderStyle.FixedSingle
+        };
+
+        var formTable = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 4,
+            Padding = new Padding(0)
+        };
+
+        for (var i = 0; i < 4; i++)
+            formTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+
+        AddField(formTable, "Patient *", _patient, 0, 0);
+        AddField(formTable, "Doctor *", _doctor, 1, 0);
+        AddField(formTable, "Date *", _date, 2, 0);
+        AddField(formTable, "Time *", _time, 3, 0);
+
+        AddField(formTable, "Consultation Fee", _fee, 0, 1);
+        AddField(formTable, "Diagnosis", _diagnosis, 1, 1);
+        AddField(formTable, "Status", _status, 2, 1);
+
+        _status.Items.AddRange(new[] { "Scheduled", "Completed", "Cancelled" });
+        _status.SelectedIndex = 0;
+
+        for (var h = 8; h <= 17; h++)
+        {
+            _time.Items.Add($"{h:00}:00");
+            _time.Items.Add($"{h:00}:30");
+        }
+        _time.SelectedIndex = 0;
+
         _patient.SelectedIndexChanged += (_, _) => { };
         _doctor.SelectedIndexChanged += (_, _) => UpdateFee();
         _date.ValueChanged += (_, _) => LoadAppointments();
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill };
-        var book = UIHelpers.ActionButton("Book Appointment"); book.Click += (_, _) => Book();
-        var refresh = UIHelpers.ActionButton("Refresh"); refresh.Click += (_, _) => { LoadSelectors(); LoadAppointments(); };
-        var update = UIHelpers.ActionButton("Update Status"); update.Click += (_, _) => UpdateStatus();
-        actions.Controls.AddRange(new Control[] { book, update, refresh }); editor.Controls.Add(actions, 3, 1);
-        root.Controls.Add(editor); root.Controls.Add(UIHelpers.Header("Appointment Scheduler")); Controls.Add(root);
+
+        var buttonPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 45,
+            Padding = new Padding(6),
+            BackColor = Color.White,
+            AutoSize = true
+        };
+
+        var book = UIHelpers.SuccessButton("📅 Book Appointment");
+        book.Click += (_, _) => Book();
+        var updateStatus = UIHelpers.ActionButton("✏️ Update Status");
+        updateStatus.Click += (_, _) => UpdateStatus();
+        var refresh = UIHelpers.ActionButton("🔄 Refresh");
+        refresh.Click += (_, _) => { LoadSelectors(); LoadAppointments(); };
+
+        buttonPanel.Controls.AddRange(new Control[] { book, updateStatus, refresh });
+        formTable.Controls.Add(buttonPanel, 3, 1);
+
+        editor.Controls.Add(formTable);
+
+        var headerSection = new Panel { Dock = DockStyle.Fill, Height = 55, BackColor = Color.White, Padding = new Padding(0) };
+        headerSection.Controls.Add(UIHelpers.Header("Appointment Scheduler"));
+
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(0) };
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        layout.Controls.Add(editor, 0, 0);
+        headerSection.Margin = new Padding(0, 8, 0, 0);
+        layout.Controls.Add(headerSection, 0, 1);
+        layout.Controls.Add(_grid, 0, 2);
+
+        root.Controls.Add(layout);
+        Controls.Add(root);
     }
 
     private static void AddField(TableLayoutPanel table, string label, Control control, int column, int row)
     {
-        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(4) }; panel.Controls.Add(control); panel.Controls.Add(new Label { Text = label, Dock = DockStyle.Top, Height = 24, Font = new Font("Segoe UI", 9F, FontStyle.Bold) }); table.Controls.Add(panel, column, row);
+        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6), BackColor = Color.White };
+
+        var labelControl = new Label
+        {
+            Text = label,
+            Dock = DockStyle.Top,
+            Height = 22,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(33, 33, 33),
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 0, 4)
+        };
+
+        control.Dock = DockStyle.Top;
+        control.Margin = new Padding(0, 0, 0, 6);
+
+        panel.Controls.Add(control);
+        panel.Controls.Add(labelControl);
+        table.Controls.Add(panel, column, row);
     }
 
     private void LoadSelectors()
     {
         try
         {
-            var patients = _patients.GetAll().ToList(); _patient.DataSource = patients; _patient.DisplayMember = "FullName"; _patient.ValueMember = "ID";
+            var patients = _patients.GetAll().ToList();
+            if (patients.Count > 0)
+            {
+                _patient.DataSource = new BindingSource(patients, null);
+                _patient.DisplayMember = "FullName";
+                _patient.ValueMember = "ID";
+            }
+
             var doctors = _doctors.GetAll().ToList();
             var doctorId = SessionManager.Current?.DoctorID;
-            if (SessionManager.Current?.Role == "Doctor" && doctorId.HasValue) doctors = doctors.Where(d => d.ID == doctorId.Value).ToList();
-            _doctor.DataSource = doctors; _doctor.DisplayMember = "FullName"; _doctor.ValueMember = "ID"; UpdateFee();
+            if (SessionManager.Current?.Role == "Doctor" && doctorId.HasValue)
+                doctors = doctors.Where(d => d.ID == doctorId.Value).ToList();
+
+            if (doctors.Count > 0)
+            {
+                _doctor.DataSource = new BindingSource(doctors, null);
+                _doctor.DisplayMember = "FullName";
+                _doctor.ValueMember = "ID";
+                UpdateFee();
+            }
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Appointments", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }

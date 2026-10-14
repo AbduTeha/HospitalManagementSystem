@@ -2,6 +2,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using HospitalManagementSystem.Core.Exceptions;
 using HospitalManagementSystem.Core.Models;
+using HospitalManagementSystem.Core.Security;
 using HospitalManagementSystem.Data;
 
 namespace HospitalManagementSystem.Core.Services;
@@ -20,6 +21,8 @@ public sealed class RoomService
 
     public int Add(Room room)
     {
+        Permissions.Require(Permission.ManageRooms);
+
         if (room.DailyRate < 0) throw new ArgumentException("Daily rate cannot be negative.");
         const string sql = @"INSERT INTO dbo.Rooms(RoomNumber,RoomType,DailyRate,Status) VALUES(@Number,@Type,@Rate,@Status); SELECT CAST(SCOPE_IDENTITY() AS INT);";
         return Convert.ToInt32(_db.ExecuteScalar(sql,
@@ -31,6 +34,8 @@ public sealed class RoomService
 
     public bool SetStatus(int roomId, string status)
     {
+        Permissions.Require(Permission.ManageRooms);
+
         if (!new[] { "Available", "Occupied" }.Contains(status)) throw new ArgumentException("Invalid room status.");
         if (status == "Occupied")
         {

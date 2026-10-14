@@ -1,1 +1,5 @@
 2026-10-04T07:08:56.9153515+03:00 | Bill generated: #1, patient #1, total 1500.00, status Unpaid
+2026-10-08T13:42:13.2786274+03:00 | Bill generated: #2, patient #3, total 1100.00, status Unpaid
+2026-10-08T13:43:00.6634173+03:00 | Appointment booked: #1, patient #3, doctor #1, 2026-10-09T08:00:00.0000000
+2026-10-08T14:16:25.9954308+03:00 | Appointment booked: #2, patient #3, doctor #4, 2026-10-08T15:00:00.0000000+03:00
+2026-10-09T20:38:34.2456666+03:00 | Bill generated: #3, patient #3, total 300.00, status Unpaid

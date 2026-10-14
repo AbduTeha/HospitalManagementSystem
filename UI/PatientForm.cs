@@ -27,35 +27,127 @@ public sealed class PatientForm : Form
 
     private void InitializeCustomComponents()
     {
-        var root = new Panel { Dock = DockStyle.Fill };
-        root.Controls.Add(_grid);
-        var editor = new TableLayoutPanel { Dock = DockStyle.Top, Height = 205, ColumnCount = 4, RowCount = 4, Padding = new Padding(8) };
-        for (var i = 0; i < 4; i++) editor.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-        AddField(editor, "Full name", _name, 0, 0); AddField(editor, "Gender", _gender, 1, 0); AddField(editor, "DOB", _dob, 2, 0); AddField(editor, "Phone", _phone, 3, 0);
-        AddField(editor, "Address", _address, 0, 1); AddField(editor, "Blood group", _blood, 1, 1);
-        _gender.Items.AddRange(new[] { "Male", "Female", "Other" }); _gender.SelectedIndex = 0;
-        _blood.Items.AddRange(new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" }); _blood.SelectedIndex = 0;
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        var add = UIHelpers.ActionButton("Add"); add.Click += (_, _) => AddPatient();
-        var update = UIHelpers.ActionButton("Update"); update.Click += (_, _) => UpdatePatient();
-        var delete = UIHelpers.ActionButton("Delete"); delete.Click += (_, _) => DeletePatient();
-        var clear = UIHelpers.ActionButton("Clear"); clear.Click += (_, _) => ClearEditor();
-        actions.Controls.AddRange(new Control[] { add, update, delete, clear });
-        editor.Controls.Add(actions, 0, 2); editor.SetColumnSpan(actions, 2);
-        var searchPanel = new FlowLayoutPanel { Dock = DockStyle.Fill };
-        _search.PlaceholderText = "Search name or phone"; var search = UIHelpers.ActionButton("Search"); search.Click += (_, _) => LoadPatients();
-        var all = UIHelpers.ActionButton("All"); all.Click += (_, _) => { _search.Clear(); LoadPatients(); };
-        searchPanel.Controls.AddRange(new Control[] { _search, search, all }); editor.Controls.Add(searchPanel, 2, 2); editor.SetColumnSpan(searchPanel, 2);
-        root.Controls.Add(editor); root.Controls.Add(UIHelpers.Header("Patient Management"));
-        _grid.BringToFront();
+        var root = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(248, 248, 248) };
+
+        var editor = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 280,
+            BackColor = Color.White,
+            Padding = new Padding(12),
+            BorderStyle = BorderStyle.FixedSingle
+        };
+
+        var formTable = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 4,
+            RowCount = 3,
+            Padding = new Padding(0)
+        };
+
+        for (var i = 0; i < 4; i++)
+            formTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+        for (var i = 0; i < 3; i++)
+            formTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+
+        AddField(formTable, "Full Name *", _name, 0, 0);
+        AddField(formTable, "Gender *", _gender, 1, 0);
+        AddField(formTable, "Date of Birth *", _dob, 2, 0);
+        AddField(formTable, "Phone *", _phone, 3, 0);
+
+        AddField(formTable, "Address *", _address, 0, 1);
+        AddField(formTable, "Blood Group *", _blood, 1, 1);
+
+        _gender.Items.AddRange(new[] { "Male", "Female", "Other" });
+        _gender.SelectedIndex = 0;
+        _blood.Items.AddRange(new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" });
+        _blood.SelectedIndex = 0;
+
+        var buttonPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 45,
+            Padding = new Padding(6),
+            BackColor = Color.White,
+            AutoSize = true
+        };
+
+        var add = UIHelpers.SuccessButton("➕ Add");
+        add.Click += (_, _) => AddPatient();
+        var update = UIHelpers.ActionButton("✏️ Update");
+        update.Click += (_, _) => UpdatePatient();
+        var delete = UIHelpers.DangerButton("🗑️ Delete");
+        delete.Click += (_, _) => DeletePatient();
+        var clear = UIHelpers.ActionButton("🔄 Clear");
+        clear.Click += (_, _) => ClearEditor();
+
+        buttonPanel.Controls.AddRange(new Control[] { add, update, delete, clear });
+        formTable.Controls.Add(buttonPanel, 0, 2);
+        formTable.SetColumnSpan(buttonPanel, 2);
+
+        var searchPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 45,
+            Padding = new Padding(6),
+            BackColor = Color.White,
+            AutoSize = true
+        };
+
+        _search.PlaceholderText = "Search by name or phone...";
+        _search.Width = 250;
+        var searchBtn = UIHelpers.ActionButton("🔍 Search");
+        searchBtn.Click += (_, _) => LoadPatients();
+        var allBtn = UIHelpers.ActionButton("📋 All");
+        allBtn.Click += (_, _) => { _search.Clear(); LoadPatients(); };
+
+        searchPanel.Controls.AddRange(new Control[] { _search, searchBtn, allBtn });
+        formTable.Controls.Add(searchPanel, 2, 2);
+        formTable.SetColumnSpan(searchPanel, 2);
+
+        editor.Controls.Add(formTable);
+
+        var headerSection = new Panel { Dock = DockStyle.Fill, Height = 55, BackColor = Color.White, Padding = new Padding(0) };
+        headerSection.Controls.Add(UIHelpers.Header("Patient Management"));
+
+        // Use a layout with three rows: editor (auto), header (auto), grid (fill)
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(0) };
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        layout.Controls.Add(editor, 0, 0);
+        // add small margin to header to sit a bit lower
+        headerSection.Margin = new Padding(0, 8, 0, 0);
+        layout.Controls.Add(headerSection, 0, 1);
+        layout.Controls.Add(_grid, 0, 2);
+
+        root.Controls.Add(layout);
         _grid.CellClick += GridCellClick;
         Controls.Add(root);
     }
 
     private static void AddField(TableLayoutPanel table, string label, Control control, int column, int row)
     {
-        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(4) };
-        panel.Controls.Add(control); panel.Controls.Add(new Label { Text = label, AutoSize = true, Dock = DockStyle.Top, Height = 24, Font = new Font("Segoe UI", 9F, FontStyle.Bold) });
+        var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6), BackColor = Color.White };
+
+        var labelControl = new Label
+        {
+            Text = label,
+            Dock = DockStyle.Top,
+            Height = 22,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(33, 33, 33),
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 0, 4)
+        };
+
+        control.Dock = DockStyle.Top;
+        control.Margin = new Padding(0, 0, 0, 6);
+
+        panel.Controls.Add(control);
+        panel.Controls.Add(labelControl);
         table.Controls.Add(panel, column, row);
     }
 

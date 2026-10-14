@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using HospitalManagementSystem.Core.Exceptions;
 using HospitalManagementSystem.Core.Interfaces;
 using HospitalManagementSystem.Core.Models;
+using HospitalManagementSystem.Core.Security;
 using HospitalManagementSystem.Data;
 
 namespace HospitalManagementSystem.Core.Repositories;
@@ -31,6 +32,8 @@ public sealed class PatientRepository : IPatientRepository
 
     public int Add(Patient patient)
     {
+        Permissions.Require(Permission.ManagePatients);
+
         const string sql = @"INSERT INTO dbo.Patients (FullName, Gender, DOB, Phone, Address, BloodGroup)
                              VALUES (@FullName,@Gender,@DOB,@Phone,@Address,@BloodGroup);
                              SELECT CAST(SCOPE_IDENTITY() AS INT);";
@@ -46,6 +49,8 @@ public sealed class PatientRepository : IPatientRepository
 
     public bool Update(Patient patient)
     {
+        Permissions.Require(Permission.ManagePatients);
+
         const string sql = @"UPDATE dbo.Patients SET FullName=@FullName, Gender=@Gender, DOB=@DOB, Phone=@Phone,
                              Address=@Address, BloodGroup=@BloodGroup WHERE PatientID=@ID;";
         return _db.ExecuteNonQuery(sql,
@@ -60,6 +65,8 @@ public sealed class PatientRepository : IPatientRepository
 
     public bool Delete(int id)
     {
+        Permissions.Require(Permission.DeletePatient);
+
         if (GetById(id) is null) throw new PatientNotFoundException(id);
         const string sql = "DELETE FROM dbo.Patients WHERE PatientID=@ID;";
         return _db.ExecuteNonQuery(sql, new SqlParameter("@ID", SqlDbType.Int) { Value = id }) > 0;

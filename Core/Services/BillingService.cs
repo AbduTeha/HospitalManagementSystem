@@ -2,6 +2,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using HospitalManagementSystem.Core.Exceptions;
 using HospitalManagementSystem.Core.Models;
+using HospitalManagementSystem.Core.Security;
 using HospitalManagementSystem.Data;
 
 namespace HospitalManagementSystem.Core.Services;
@@ -15,6 +16,8 @@ public sealed class BillingService
 
     public int GenerateBill(Bill bill)
     {
+        Permissions.Require(Permission.ManageBilling);
+
         if (bill.PatientID <= 0) throw new PatientNotFoundException(bill.PatientID);
         if (bill.DoctorFee < 0 || bill.RoomFee < 0 || bill.MedicineFee < 0)
             throw new ArgumentException("Bill charges cannot be negative.");
@@ -52,14 +55,21 @@ public sealed class BillingService
                              ORDER BY b.BillDate DESC;";
         return _db.ExecuteQuery(sql).AsEnumerable().Select(r => new Bill
         {
-            BillID = Convert.ToInt32(r["BillID"]), PatientID = Convert.ToInt32(r["PatientID"]), PatientName = Convert.ToString(r["PatientName"]),
-            DoctorFee = Convert.ToDecimal(r["DoctorFee"]), RoomFee = Convert.ToDecimal(r["RoomFee"]), MedicineFee = Convert.ToDecimal(r["MedicineFee"]),
-            PaymentStatus = Convert.ToString(r["PaymentStatus"])!, BillDate = Convert.ToDateTime(r["BillDate"])
+            BillID = Convert.ToInt32(r["BillID"]),
+            PatientID = Convert.ToInt32(r["PatientID"]),
+            PatientName = Convert.ToString(r["PatientName"]),
+            DoctorFee = Convert.ToDecimal(r["DoctorFee"]),
+            RoomFee = Convert.ToDecimal(r["RoomFee"]),
+            MedicineFee = Convert.ToDecimal(r["MedicineFee"]),
+            PaymentStatus = Convert.ToString(r["PaymentStatus"])!,
+            BillDate = Convert.ToDateTime(r["BillDate"])
         }).ToList();
     }
 
     public bool SetPaymentStatus(int billId, string status)
     {
+        Permissions.Require(Permission.ManageBilling);
+
         if (!new[] { "Paid", "Unpaid" }.Contains(status)) throw new ArgumentException("Invalid payment status.");
         const string sql = "UPDATE dbo.Billings SET PaymentStatus=@Status WHERE BillID=@ID;";
         return _db.ExecuteNonQuery(sql,

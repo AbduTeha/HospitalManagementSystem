@@ -1,3 +1,4 @@
+using HospitalManagementSystem.Core.Security;
 using HospitalManagementSystem.Core.Services;
 using HospitalManagementSystem.Data;
 
@@ -15,6 +16,7 @@ public sealed class MainDashboard : Form
         Text = "Hospital Management System";
         WindowState = FormWindowState.Maximized;
         MinimumSize = new Size(1000, 650);
+        BackColor = Color.FromArgb(248, 248, 248);
         InitializeCustomComponents();
         ApplyRolePermissions();
         ShowHome();
@@ -23,17 +25,35 @@ public sealed class MainDashboard : Form
     private void InitializeCustomComponents()
     {
         var session = SessionManager.Current ?? throw new InvalidOperationException("No active session.");
+
+        _content.BackColor = Color.FromArgb(248, 248, 248);
+        _sidebar.BackColor = Color.FromArgb(240, 245, 250);
+        _sidebar.BorderStyle = BorderStyle.FixedSingle;
+        _sidebar.Width = 250;
+
         _userLabel.Text = $"{session.FullName}\n{session.Role}";
+        _userLabel.Height = 80;
+        _userLabel.BackColor = Color.FromArgb(0, 102, 153);
+        _userLabel.ForeColor = Color.White;
+        _userLabel.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+        _userLabel.BorderStyle = BorderStyle.FixedSingle;
+
         _sidebar.Controls.Add(_userLabel);
         Controls.Add(_content);
         Controls.Add(_sidebar);
-        AddNav("Dashboard", ShowHome);
-        AddNav("Patients", () => OpenChild(new PatientForm()));
-        AddNav("Doctors", () => OpenChild(new DoctorForm()));
-        AddNav("Appointments", () => OpenChild(new AppointmentForm()));
-        AddNav("Rooms", () => OpenChild(new RoomForm()));
-        AddNav("Billing", () => OpenChild(new BillingForm()));
-        AddNav("Sign out", Close);
+
+        AddNav("📊 Dashboard", ShowHome);
+        AddNav("👥 Patients", () => OpenChild(new PatientForm()));
+        AddNav("🏥 Doctors", () => OpenChild(new DoctorForm()));
+        AddNav("📅 Appointments", () => OpenChild(new AppointmentForm()));
+        AddNav("🛏️ Rooms", () => OpenChild(new RoomForm()));
+        AddNav("💳 Billing", () => OpenChild(new BillingForm()));
+
+        var spacer = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(240, 245, 250) };
+        _sidebar.Controls.Add(spacer);
+
+        AddNav("🚪 Sign out", Close);
+
         Resize += (_, _) => _content.PerformLayout();
     }
 
@@ -47,18 +67,9 @@ public sealed class MainDashboard : Form
 
     private void ApplyRolePermissions()
     {
-        var role = SessionManager.Current?.Role;
-        if (role == "Admin") return;
-        if (role == "Doctor")
-        {
-            _buttons["Doctors"].Visible = false;
-            _buttons["Rooms"].Visible = false;
-        }
-        else if (role == "Receptionist")
-        {
-            _buttons["Doctors"].Visible = false;
-            _buttons["Rooms"].Visible = false;
-        }
+        _buttons["🏥 Doctors"].Visible = Permissions.Has(Permission.ManageDoctors);
+        _buttons["🛏️ Rooms"].Visible = Permissions.Has(Permission.ManageRooms);
+        _buttons["💳 Billing"].Visible = Permissions.Has(Permission.ManageBilling);
     }
 
     private void ShowHome()
@@ -70,7 +81,10 @@ public sealed class MainDashboard : Form
         var summary = new Label
         {
             Text = $"Welcome, {session.FullName}!\n\nRole: {session.Role}\n\nUse the navigation menu to manage hospital operations.",
-            Dock = DockStyle.Top, Height = 160, Padding = new Padding(22), Font = new Font("Segoe UI", 12F)
+            Dock = DockStyle.Top,
+            Height = 160,
+            Padding = new Padding(22),
+            Font = new Font("Segoe UI", 12F)
         };
         panel.Controls.Add(summary);
         var dbStatus = new Label { Dock = DockStyle.Top, Height = 40, Padding = new Padding(22, 0, 0, 0), Text = "Checking database connection..." };

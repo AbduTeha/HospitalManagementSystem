@@ -21,6 +21,11 @@ public sealed class InvalidAppointmentException : HospitalException
     public InvalidAppointmentException(string message) : base(message) { }
 }
 
+public sealed class AccessDeniedException : HospitalException
+{
+    public AccessDeniedException(string message) : base(message) { }
+}
+
 public class RoomOccupiedException : HospitalException
 {
     public RoomOccupiedException(int roomId) : base($"Room #{roomId} is not available.") { }

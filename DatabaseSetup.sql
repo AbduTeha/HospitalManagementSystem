@@ -37,6 +37,12 @@ BEGIN
 END
 GO
 
+-- Link a user account to its doctor record by ID (added for existing databases too).
+IF COL_LENGTH(N'dbo.Users', N'DoctorID') IS NULL
+    ALTER TABLE dbo.Users ADD DoctorID INT NULL
+        CONSTRAINT FK_Users_Doctors FOREIGN KEY REFERENCES dbo.Doctors(DoctorID);
+GO
+
 IF OBJECT_ID(N'dbo.Patients', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Patients
@@ -154,4 +160,11 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Patients WHERE Phone = '0912000002')
 INSERT INTO dbo.Patients (FullName, Gender, DOB, Phone, Address, BloodGroup) VALUES ('Sara Ahmed', 'Female', '1998-08-20', '0912000002', 'Dire Dawa', 'A+');
 IF NOT EXISTS (SELECT 1 FROM dbo.Patients WHERE Phone = '0912000003')
 INSERT INTO dbo.Patients (FullName, Gender, DOB, Phone, Address, BloodGroup) VALUES ('Daniel Tesfaye', 'Male', '1987-11-03', '0912000003', 'Adama', 'B+');
+GO
+
+-- Link doctor accounts to their doctor records. Runs once; afterwards the DoctorID is used.
+UPDATE u SET u.DoctorID = d.DoctorID
+FROM dbo.Users u
+JOIN dbo.Doctors d ON d.FullName = u.FullName
+WHERE u.Role = 'Doctor' AND u.DoctorID IS NULL;
 GO

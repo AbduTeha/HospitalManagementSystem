@@ -24,12 +24,19 @@ public sealed class AppointmentRepository : IAppointmentRepository
         var table = _db.ExecuteQuery(sql, new SqlParameter("@DoctorID", SqlDbType.Int) { Value = (object?)doctorId ?? DBNull.Value });
         return table.AsEnumerable().Select(r => new Appointment
         {
-            AppointmentID = Convert.ToInt32(r["AppointmentID"]), PatientID = Convert.ToInt32(r["PatientID"]),
-            DoctorID = Convert.ToInt32(r["DoctorID"]), AppointmentDate = Convert.ToDateTime(r["AppointmentDate"]),
-            Status = Convert.ToString(r["Status"])!, Diagnosis = r["Diagnosis"] == DBNull.Value ? null : Convert.ToString(r["Diagnosis"]),
-            PatientName = Convert.ToString(r["PatientName"]), DoctorName = Convert.ToString(r["DoctorName"])
+            AppointmentID = Convert.ToInt32(r["AppointmentID"]),
+            PatientID = Convert.ToInt32(r["PatientID"]),
+            DoctorID = Convert.ToInt32(r["DoctorID"]),
+            AppointmentDate = Convert.ToDateTime(r["AppointmentDate"]),
+            Status = Convert.ToString(r["Status"])!,
+            Diagnosis = r["Diagnosis"] == DBNull.Value ? null : Convert.ToString(r["Diagnosis"]),
+            PatientName = Convert.ToString(r["PatientName"]),
+            DoctorName = Convert.ToString(r["DoctorName"])
         }).ToList();
     }
+
+    public Appointment? GetById(int id) =>
+        GetAll().FirstOrDefault(a => a.AppointmentID == id);
 
     public bool HasConflict(int doctorId, DateTime appointmentDate, int? excludeAppointmentId = null)
     {
